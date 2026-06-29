@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Smart EV Energy Analytics</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+
+    <div class="header">
+
+        <h1>🚗 Smart EV Energy Analytics Dashboard</h1>
+
+        <p>Predict Electric Vehicle Energy Consumption using Machine Learning.</p>
+
+    </div>
+
+    <div class="dashboard">
+
+        <!-- LEFT PANEL -->
+
+        <div class="left-panel">
+
+            <form method="POST">
+
+                <label>Speed (km/h)</label>
+                <br><br>
+
+                <input
+                    type="number"
+                    name="speed"
+                    placeholder="Enter Speed"
+                    min="0"
+                    max="200"
+                    required>
+
+                <br><br>
+
+                <label>Battery State (%)</label>
+                <br><br>
+
+                <input
+                    type="number"
+                    name="battery"
+                    placeholder="Enter Battery Percentage"
+                    min="0"
+                    max="100"
+                    required>
+
+                <br><br>
+
+                <label>Temperature (°C)</label>
+                <br><br>
+
+                <input
+                    type="number"
+                    name="temperature"
+                    placeholder="Enter Temperature"
+                    min="-20"
+                    max="60"
+                    required>
+
+                <br><br>
+
+                <label>Humidity (%)</label>
+                <br><br>
+
+                <input
+                    type="number"
+                    name="humidity"
+                    placeholder="Enter Humidity"
+                    min="0"
+                    max="100"
+                    required>
+
+                <br><br>
+
+                <label>Distance Travelled (km)</label>
+                <br><br>
+
+                <input
+                    type="number"
+                    name="distance"
+                    placeholder="Enter Distance"
+                    min="0"
+                    max="1000"
+                    required>
+
+                <br><br>
+
+                <button type="submit">
+                    ⚡ Predict Energy
+                </button>
+
+                <button type="reset">
+                    Reset
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- RIGHT PANEL -->
+
+        <div class="right-panel">
+
+        {% if prediction %}
+
+            <!-- Prediction -->
+
+            <div class="result">
+
+                <h2>⚡ Predicted Energy Consumption</h2>
+
+                <h1>{{ prediction }} kWh</h1>
+
+                <p><strong>Energy Level:</strong> {{ energy_level }}</p>
+
+            </div>
+
+            <!-- Doughnut Chart -->
+
+            <div class="chart-container">
+
+                <canvas id="energyChart"></canvas>
+
+            </div>
+
+            <!-- Input Summary -->
+
+            <div class="summary">
+
+                <h2>📋 Input Summary</h2>
+
+                <p>🚗 <strong>Speed:</strong> {{ speed }} km/h</p>
+
+                <p>🔋 <strong>Battery:</strong> {{ battery }} %</p>
+
+                <p>🌡 <strong>Temperature:</strong> {{ temperature }} °C</p>
+
+                <p>💧 <strong>Humidity:</strong> {{ humidity }} %</p>
+
+                <p>📍 <strong>Distance:</strong> {{ distance }} km</p>
+
+                <p><strong>Battery Status:</strong> {{ battery_status|safe }}</p>
+
+            </div>
+
+            <!-- Prediction History -->
+
+            <div class="summary">
+
+                <h2>📈 Prediction History</h2>
+
+                <table>
+
+                    <tr>
+
+                        <th>Speed</th>
+                        <th>Prediction</th>
+
+                    </tr>
+
+                    {% for row in history %}
+
+                    <tr>
+
+                        <td>{{ row.Speed }}</td>
+
+                        <td>{{ row.Prediction }}</td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </table>
+
+            </div>
+
+        {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% if prediction %}
+
+<script>
+
+// Maximum expected energy
+const MAX_ENERGY = 20;
+
+const prediction = {{ prediction }};
+const remaining = Math.max(MAX_ENERGY - prediction, 0);
+
+
+// Plugin to display percentage in center
+
+const centerTextPlugin = {
+
+    id: "centerText",
+
+    beforeDraw(chart) {
+
+        const { width, height, ctx } = chart;
+
+        ctx.restore();
+
+        const percentage = Math.round((prediction / MAX_ENERGY) * 100);
+
+        ctx.font = "bold 34px Arial";
+
+        ctx.fillStyle = "#28a745";
+
+        ctx.textAlign = "center";
+
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(
+
+            percentage + "%",
+
+            width / 2,
+
+            height / 2
+
+        );
+
+        ctx.save();
+
+    }
+
+};
+
+Chart.register(centerTextPlugin);
+
+
+const ctx = document.getElementById("energyChart").getContext("2d");
+
+new Chart(ctx, {
+
+    type: "doughnut",
+
+    data: {
+
+        labels: [
+
+            "Predicted Energy",
+
+            "Remaining Capacity"
+
+        ],
+
+        datasets: [{
+
+            data: [
+
+                prediction,
+
+                remaining
+
+            ],
+
+            backgroundColor: [
+
+                "#28a745",
+
+                "#e9ecef"
+
+            ],
+
+            borderWidth: 2
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        cutout: "55%",
+
+        plugins: {
+
+            legend: {
+
+                position: "bottom"
+
+            },
+
+            title: {
+
+                display: true,
+
+                text: "Energy Consumption"
+
+            }
+
+        }
+
+    }
+
+});
+
+</script>
+
+{% endif %}
+
+</body>
+
+</html>
